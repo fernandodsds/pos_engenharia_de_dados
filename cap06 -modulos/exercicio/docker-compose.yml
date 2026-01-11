@@ -1,0 +1,36 @@
+services:
+  # O simulador de AWS
+  localstack:
+    container_name: localstack-main
+    image: localstack/localstack
+    ports:
+      - "127.0.0.1:4566:4566"            # LocalStack Gateway
+      - "127.0.0.1:4510-4559:4510-4559"  # ext services port range
+      - "127.0.0.1:53:53"                # DNS config
+      - "127.0.0.1:53:53/udp"            # DNS config
+      - "127.0.0.1:443:443"              # LocalStack HTTPS Gateway
+    environment:
+      - DEBUG=1
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    networks:
+      - terraform_net
+  terraform_env:
+    build: .
+    container_name: terraform-localstack
+    ports:
+      - "8501:8501"
+    env_file:
+      - .env
+    volumes:
+      - .:/usr/src/app
+    depends_on:
+      - localstack      
+    networks:
+          - terraform_net    
+    entrypoint: /bin/sh -c "sleep infinity" # Mantém o container vivo para você rodar os comandos            
+
+networks:
+  terraform_net:
+    driver: bridge          
